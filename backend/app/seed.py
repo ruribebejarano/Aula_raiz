@@ -85,6 +85,11 @@ def seed_if_empty(session: Session) -> None:
         "tema": "La vida en la chacra",
         "grado_grupo": "1er grado - 2do grado",
         "proposito": "Comprender un texto breve sobre actividades agricolas de la comunidad.",
+        "texto_o_situacion": (
+            "En la chacra de la familia Quispe, todos ayudan segun su edad: los mas pequeños "
+            "recogen las hojas sueltas, mientras los mayores preparan la tierra para la siguiente "
+            "siembra. Cuando termina el dia, se reunen a conversar sobre lo que sembraron."
+        ),
         "materiales": ["Ficha impresa", "Lapiz"],
         "instrucciones": ["Lee el texto en voz alta.", "Responde las preguntas segun tu nivel."],
         "actividades_por_grupo": [

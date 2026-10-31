@@ -15,3 +15,6 @@ frontend/dev-dist/
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Harness-local state (not project code)
+.claude/

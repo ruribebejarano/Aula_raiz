@@ -38,12 +38,16 @@ export default function MaterialView({ type }: { type: "material" | "lesson" }) 
   const speechText =
     type === "material" && material
       ? [
-          material.content.proposito,
+          material.content.texto_o_situacion,
           ...material.content.instrucciones,
           ...material.content.preguntas.map((p) => p.enunciado),
         ].join(". ")
       : type === "lesson" && lesson
-      ? [lesson.content.proposito, ...lesson.content.momentos.map((m) => m.descripcion)].join(". ")
+      ? [
+          lesson.content.texto_o_situacion,
+          lesson.content.proposito,
+          ...lesson.content.momentos.map((m) => m.descripcion),
+        ].join(". ")
       : "";
 
   return (
@@ -87,6 +91,10 @@ function PrintableMaterial({ material }: { material: Material }) {
       </header>
 
       <Section title="Proposito">{c.proposito}</Section>
+
+      <Section title={c.area?.toLowerCase().startsWith("com") ? "Texto de lectura" : "Situacion"}>
+        <p className="italic border-l-2 border-forest-800/30 pl-3">{c.texto_o_situacion}</p>
+      </Section>
 
       <Section title="Materiales">
         <ul className="list-disc ml-5">
@@ -155,6 +163,10 @@ function PrintableLesson({ lesson }: { lesson: LessonPlan }) {
       </header>
 
       <Section title="Proposito">{c.proposito}</Section>
+
+      <Section title={c.area?.toLowerCase().startsWith("com") ? "Texto de lectura" : "Situacion"}>
+        <p className="italic border-l-2 border-forest-800/30 pl-3">{c.texto_o_situacion}</p>
+      </Section>
 
       <Section title="Materiales">
         <ul className="list-disc ml-5">

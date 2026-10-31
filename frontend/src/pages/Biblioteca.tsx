@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { generateLesson, generateMaterial, listMaterials, listLessons } from "../api/endpoints";
 import type { LessonPlan, Material } from "../api/types";
 import { Button, Card, EmptyState, LoadingState, PageTitle } from "../components/Common";
+import RadioAulaButton from "../components/RadioAulaButton";
 
 const AREAS = ["Comunicacion", "Matematica"];
 const SUPPORT_LEVELS = [
@@ -75,6 +76,14 @@ export default function Biblioteca() {
         title="Biblioteca IA"
         subtitle="Genera una sesion o ficha diferenciada lista para imprimir"
       />
+
+      <Card className="mb-6 bg-forest-50/60 border-forest-100">
+        <h3 className="font-display font-bold text-forest-800 mb-1">RADIO AULA</h3>
+        <p className="text-sm text-forest-700/70 mb-3">
+          Prueba aqui la lectura en voz alta antes de generar una ficha completa.
+        </p>
+        <RadioAulaButton text="Esta es una prueba de RADIO AULA. Si escuchas esta frase, tu navegador puede leer en voz alta las instrucciones y actividades de la Biblioteca IA." />
+      </Card>
 
       <Card className="mb-6">
         <form onSubmit={submit} className="space-y-4">

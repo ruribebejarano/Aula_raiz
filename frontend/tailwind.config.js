@@ -24,7 +24,21 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Atkinson Hyperlegible", "Inter", "system-ui", "sans-serif"],
+        sans: ["Nunito", "Nunito Sans", "system-ui", "sans-serif"],
+        display: ["Nunito", "system-ui", "sans-serif"],
+      },
+      boxShadow: {
+        soft: "0 2px 10px -2px rgba(31, 61, 43, 0.12)",
+        lift: "0 10px 24px -8px rgba(31, 61, 43, 0.25)",
+      },
+      keyframes: {
+        "fade-up": {
+          "0%": { opacity: "0", transform: "translateY(6px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+      animation: {
+        "fade-up": "fade-up 0.35s ease-out both",
       },
     },
   },

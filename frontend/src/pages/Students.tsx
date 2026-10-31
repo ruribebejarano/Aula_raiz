@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Plus, X } from "lucide-react";
 import { createStudent, listStudents } from "../api/endpoints";
 import type { Student } from "../api/types";
 import {
@@ -11,6 +12,12 @@ import {
   PageTitle,
   SupportBadge,
 } from "../components/Common";
+
+const GRADE_COLORS = [
+  "bg-forest-100 text-forest-700",
+  "bg-terracotta-100 text-terracotta-600",
+  "bg-amber-50 text-amber-700",
+];
 
 export default function Students() {
   const [students, setStudents] = useState<Student[] | null>(null);
@@ -30,8 +37,9 @@ export default function Students() {
     <div>
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <PageTitle title="Estudiantes" subtitle="Lista con codigo anonimo, grado y ultimo resultado" />
-        <Button onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "Cancelar" : "+ Registrar estudiante"}
+        <Button onClick={() => setShowForm((v) => !v)} className="flex items-center gap-1.5">
+          {showForm ? <X size={16} /> : <Plus size={16} />}
+          {showForm ? "Cancelar" : "Registrar estudiante"}
         </Button>
       </div>
 
@@ -54,13 +62,20 @@ export default function Students() {
         <div className="grid gap-3">
           {students.map((s) => (
             <Link key={s.id} to={`/estudiantes/${s.id}`}>
-              <Card className="flex flex-wrap items-center justify-between gap-3 hover:border-forest-600 transition-colors">
-                <div>
-                  <p className="font-semibold text-forest-800">{s.student_code}</p>
-                  <p className="text-xs text-forest-700/70">
-                    Grado {s.grade}
-                    {s.classroom_group ? ` · Grupo ${s.classroom_group}` : ""}
-                  </p>
+              <Card className="flex flex-wrap items-center justify-between gap-3 hover:border-forest-600 hover:-translate-y-0.5 transition-all duration-200">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-display font-bold text-sm shrink-0 ${GRADE_COLORS[s.grade % GRADE_COLORS.length]}`}
+                  >
+                    {s.grade}°
+                  </div>
+                  <div>
+                    <p className="font-semibold text-forest-800">{s.student_code}</p>
+                    <p className="text-xs text-forest-700/70">
+                      Grado {s.grade}
+                      {s.classroom_group ? ` · Grupo ${s.classroom_group}` : ""}
+                    </p>
+                  </div>
                 </div>
                 <div className="text-right">
                   {s.last_competency ? (

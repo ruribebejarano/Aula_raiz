@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { AlertTriangle, Inbox, Loader2 } from "lucide-react";
 
 export function Card({
   children,
@@ -12,7 +13,9 @@ export function Card({
   return (
     <div
       onClick={onClick}
-      className={`bg-white rounded-xl border border-forest-100 shadow-sm p-5 ${className}`}
+      className={`bg-white rounded-xl border border-forest-100 shadow-sm p-5 transition-shadow duration-200 ${
+        onClick ? "cursor-pointer hover:shadow-lift hover:-translate-y-0.5 transition-transform" : ""
+      } ${className}`}
     >
       {children}
     </div>
@@ -21,24 +24,39 @@ export function Card({
 
 export function PageTitle({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="mb-6">
-      <h2 className="text-2xl font-bold text-forest-800">{title}</h2>
+    <div className="mb-6 animate-fade-up">
+      <h2 className="text-2xl font-display font-extrabold text-forest-800">{title}</h2>
       {subtitle && <p className="text-forest-700/70 mt-1 text-sm">{subtitle}</p>}
     </div>
   );
 }
 
+export function Skeleton({ className = "" }: { className?: string }) {
+  return <div className={`animate-pulse rounded-lg bg-forest-100/70 ${className}`} />;
+}
+
 export function LoadingState({ label = "Cargando..." }: { label?: string }) {
   return (
-    <div className="flex items-center justify-center py-16 text-forest-700/70">
-      <span className="animate-pulse">{label}</span>
+    <div className="py-10">
+      <div className="flex items-center gap-2 text-forest-700/70 mb-6 justify-center">
+        <Loader2 size={16} className="animate-spin" />
+        <span>{label}</span>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-20" />
+        ))}
+      </div>
     </div>
   );
 }
 
 export function EmptyState({ title, description }: { title: string; description?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center text-center py-16 px-4 border-2 border-dashed border-forest-100 rounded-xl">
+    <div className="flex flex-col items-center justify-center text-center py-16 px-4 border-2 border-dashed border-forest-100 rounded-xl bg-forest-50/40">
+      <div className="w-10 h-10 rounded-full bg-forest-100 text-forest-600 flex items-center justify-center mb-3">
+        <Inbox size={18} />
+      </div>
       <p className="font-semibold text-forest-800">{title}</p>
       {description && <p className="text-sm text-forest-700/70 mt-1 max-w-md">{description}</p>}
     </div>
@@ -48,12 +66,15 @@ export function EmptyState({ title, description }: { title: string; description?
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center text-center py-12 px-4 bg-terracotta-100 border border-terracotta-400 rounded-xl">
+      <div className="w-10 h-10 rounded-full bg-white text-terracotta-600 flex items-center justify-center mb-2">
+        <AlertTriangle size={18} />
+      </div>
       <p className="font-semibold text-terracotta-600">No se pudo cargar la informacion</p>
       <p className="text-sm text-forest-800/70 mt-1 max-w-md">{message}</p>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="mt-3 px-4 py-2 rounded-lg bg-terracotta-500 text-white text-sm font-medium hover:bg-terracotta-600"
+          className="mt-3 px-4 py-2 rounded-lg bg-terracotta-500 text-white text-sm font-medium hover:bg-terracotta-600 transition-colors active:scale-95"
         >
           Reintentar
         </button>
@@ -77,11 +98,12 @@ export function Button({
   disabled?: boolean;
   className?: string;
 }) {
-  const base = "px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+  const base =
+    "px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100";
   const styles = {
-    primary: "bg-forest-600 text-white hover:bg-forest-700",
-    secondary: "bg-terracotta-500 text-white hover:bg-terracotta-600",
-    ghost: "bg-transparent text-forest-700 border border-forest-100 hover:bg-forest-50",
+    primary: "bg-forest-600 text-white hover:bg-forest-700 shadow-sm hover:shadow-soft",
+    secondary: "bg-terracotta-500 text-white hover:bg-terracotta-600 shadow-sm hover:shadow-soft",
+    ghost: "bg-transparent text-forest-700 border border-forest-100 hover:bg-forest-50 hover:border-forest-600",
   };
   return (
     <button
@@ -103,7 +125,7 @@ export function SupportBadge({ level }: { level: string }) {
   };
   const style = map[level] ?? "bg-gray-100 text-gray-700 border-gray-300";
   return (
-    <span className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full border ${style}`}>
+    <span className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${style}`}>
       {level}
     </span>
   );

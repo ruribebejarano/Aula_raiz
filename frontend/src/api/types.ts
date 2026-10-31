@@ -57,6 +57,7 @@ export interface MaterialContent {
   tema: string;
   grado_grupo: string;
   proposito: string;
+  texto_o_situacion: string;
   materiales: string[];
   instrucciones: string[];
   actividades_por_grupo: { grupo: string; actividad: string }[];
@@ -86,6 +87,7 @@ export interface LessonContent {
   grado_grupo: string;
   duracion_minutos: number;
   proposito: string;
+  texto_o_situacion: string;
   materiales: string[];
   momentos: { momento: string; duracion_minutos: number; descripcion: string }[];
   actividades_por_grupo: { grupo: string; actividad: string }[];

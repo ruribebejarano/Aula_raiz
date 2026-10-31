@@ -4,6 +4,20 @@
 
 html, body {
   background-color: #faf7f0;
+  font-family: "Nunito", "Nunito Sans", system-ui, sans-serif;
+}
+
+::selection {
+  background-color: #dcebe0;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #dcebe0;
+  border-radius: 4px;
 }
 
 @media print {
