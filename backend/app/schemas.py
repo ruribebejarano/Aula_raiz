@@ -123,6 +123,7 @@ class LessonOut(BaseModel):
     title: str
     topic: str
     duration_minutes: int
+    provider: str
     created_at: datetime
     content: dict
 

@@ -110,6 +110,7 @@ export interface LessonPlan {
   title: string;
   topic: string;
   duration_minutes: number;
+  provider: string;
   created_at: string;
   content: LessonContent;
 }

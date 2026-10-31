@@ -20,6 +20,7 @@ def list_lessons(session: Session = Depends(get_session)):
             title=l.title,
             topic=l.topic,
             duration_minutes=l.duration_minutes,
+            provider=l.provider,
             created_at=l.created_at,
             content=json.loads(l.content_json),
         )
@@ -38,6 +39,7 @@ def generate_lesson(payload: LessonGenerateRequest, session: Session = Depends(g
         topic=payload.topic,
         duration_minutes=payload.duration_minutes,
         content_json=json.dumps(result.content, ensure_ascii=False),
+        provider=result.provider_used,
     )
     session.add(lesson)
     session.commit()
@@ -48,6 +50,7 @@ def generate_lesson(payload: LessonGenerateRequest, session: Session = Depends(g
         title=lesson.title,
         topic=lesson.topic,
         duration_minutes=lesson.duration_minutes,
+        provider=lesson.provider,
         created_at=lesson.created_at,
         content=result.content,
     )

@@ -67,4 +67,5 @@ class LessonPlan(SQLModel, table=True):
     topic: str
     duration_minutes: int
     content_json: str
+    provider: str = "demo"  # "demo" | "ollama" | "claude"
     created_at: datetime = Field(default_factory=datetime.utcnow)

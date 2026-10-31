@@ -145,11 +145,16 @@ export default function MaterialView({ type }: { type: "material" | "lesson" }) 
   );
 }
 
+const PROVIDER_LABELS: Record<string, string> = {
+  demo: "Contenido de demostracion — plantilla local.",
+  ollama: "Generado por Ollama (modelo local).",
+  claude: "Generado por Claude (Anthropic).",
+};
+
 function ProviderNotice({ provider, aviso }: { provider: string; aviso: string }) {
   return (
     <p className="text-xs italic text-forest-700/70 mb-4 no-print">
-      {provider === "demo" ? "Contenido de demostracion — plantilla local." : "Generado por Ollama."}{" "}
-      {aviso}
+      {PROVIDER_LABELS[provider] ?? "Contenido generado."} {aviso}
     </p>
   );
 }
@@ -332,7 +337,7 @@ function PrintableLesson({ lesson }: { lesson: LessonPlan }) {
   const c = lesson.content;
   return (
     <div className="print-page bg-white rounded-xl border border-forest-100 shadow-sm p-6 md:p-10 max-w-3xl mx-auto print:border-0 print:shadow-none print:max-w-full">
-      <ProviderNotice provider="demo" aviso={c.aviso} />
+      <ProviderNotice provider={lesson.provider} aviso={c.aviso} />
       <header className="mb-5 border-b border-forest-800 pb-3">
         <h1 className="text-xl font-bold">{c.titulo}</h1>
         <p className="text-sm">

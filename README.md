@@ -87,7 +87,7 @@ modo de un solo puerto, define `VITE_API_BASE_URL` en `frontend/.env` apuntando 
 IP LAN del backend (ver `frontend/.env.example`), porque el celular no puede resolver
 `localhost` como la laptop.
 
-## 3. Motor de IA: demo vs Ollama
+## 3. Motor de IA: demo vs Ollama vs Claude
 
 Por defecto, `AI_PROVIDER=demo` (backend/.env). En este modo, BIBLIOTECA IA genera
 fichas y sesiones mediante plantillas deterministas, sin internet ni modelo instalado.
@@ -107,6 +107,25 @@ Para usar un modelo real corriendo localmente:
    sistema retorna automaticamente al modo demo para esa generacion (no rompe el flujo).
 
 Ollama **no es requisito** para que el MVP funcione de principio a fin.
+
+### Claude (solo para presentaciones en vivo)
+
+Para generar contenido con un modelo de nube real durante una demo o sustentacion
+(no es requisito del MVP offline, que debe seguir funcionando sin internet):
+
+1. Genera una API key propia en [console.anthropic.com](https://console.anthropic.com).
+2. En `backend/.env`:
+   ```
+   AI_PROVIDER=claude
+   ANTHROPIC_API_KEY=sk-ant-...
+   CLAUDE_MODEL=claude-opus-5
+   ```
+3. Reiniciar el backend. Si la API key falta, es invalida o la llamada falla (limite,
+   timeout, etc.), el sistema retorna automaticamente al modo demo para esa generacion.
+
+**Nunca** subas la API key al repositorio ni la definas en el frontend (`frontend/.env`);
+vive solo en `backend/.env` (ignorado por git) o como variable de entorno del servidor
+(Render), y solo el backend la usa.
 
 ## 4. Pruebas manuales sugeridas (ver tambien el documento de planeamiento, seccion 20)
 

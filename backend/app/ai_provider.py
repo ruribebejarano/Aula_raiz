@@ -7,6 +7,11 @@ OllamaAIProvider: opcional. Intenta conectarse a un modelo local via la API
 de Ollama. Si falla o la respuesta no es JSON valido, retorna al fallback de
 DemoAIProvider y así lo informa.
 
+ClaudeAIProvider: opcional, pensado para una demo/presentacion en vivo (no
+es requisito del MVP offline). Usa la API de Anthropic con salida JSON
+forzada via output_config.format. Si no hay API key configurada o la
+llamada falla, retorna al fallback de DemoAIProvider.
+
 Importante: nunca se envían nombres completos ni datos identificables de
 estudiantes al modelo. Solo area, tema, grados y niveles de apoyo.
 """
@@ -17,6 +22,7 @@ import re
 from abc import ABC, abstractmethod
 from typing import Any
 
+import anthropic
 import httpx
 
 from app.config import settings
@@ -428,7 +434,212 @@ class OllamaAIProvider(AIProvider):
         return AIGenerationResult(content=result, provider_used="ollama")
 
 
+_GRADE_TASK_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "grado": {"type": "integer"},
+        "instruccion": {"type": "string"},
+        "pregunta": {"type": "string"},
+    },
+    "required": ["grado", "instruccion", "pregunta"],
+    "additionalProperties": False,
+}
+
+_GROUP_ACTIVITY_SCHEMA = {
+    "type": "object",
+    "properties": {"grupo": {"type": "string"}, "actividad": {"type": "string"}},
+    "required": ["grupo", "actividad"],
+    "additionalProperties": False,
+}
+
+_QUESTION_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "enunciado": {"type": "string"},
+        "pauta_de_revision": {"type": "string"},
+    },
+    "required": ["enunciado", "pauta_de_revision"],
+    "additionalProperties": False,
+}
+
+MATERIAL_JSON_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "titulo": {"type": "string"},
+        "area": {"type": "string"},
+        "tema": {"type": "string"},
+        "grado_grupo": {"type": "string"},
+        "proposito": {"type": "string"},
+        "texto_o_situacion": {"type": "string"},
+        "texto_partes": {"type": "array", "items": {"type": "string"}},
+        "pregunta_interactiva": {"type": "string"},
+        "respuesta_clave": {"type": ["string", "null"]},
+        "materiales": {"type": "array", "items": {"type": "string"}},
+        "instrucciones": {"type": "array", "items": {"type": "string"}},
+        "actividades_por_grado": {"type": "array", "items": _GRADE_TASK_SCHEMA},
+        "actividades_por_grupo": {"type": "array", "items": _GROUP_ACTIVITY_SCHEMA},
+        "preguntas": {"type": "array", "items": _QUESTION_SCHEMA},
+        "adaptacion": {
+            "type": "object",
+            "properties": {"reforzar": {"type": "string"}, "ampliar": {"type": "string"}},
+            "required": ["reforzar", "ampliar"],
+            "additionalProperties": False,
+        },
+        "indicacion_impresion": {"type": "string"},
+        "contexto_local": {"type": "string"},
+    },
+    "required": [
+        "titulo", "area", "tema", "grado_grupo", "proposito", "texto_o_situacion",
+        "texto_partes", "pregunta_interactiva", "respuesta_clave", "materiales",
+        "instrucciones", "actividades_por_grado", "actividades_por_grupo", "preguntas",
+        "adaptacion", "indicacion_impresion", "contexto_local",
+    ],
+    "additionalProperties": False,
+}
+
+LESSON_JSON_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "titulo": {"type": "string"},
+        "area": {"type": "string"},
+        "tema": {"type": "string"},
+        "grado_grupo": {"type": "string"},
+        "duracion_minutos": {"type": "integer"},
+        "proposito": {"type": "string"},
+        "texto_o_situacion": {"type": "string"},
+        "texto_partes": {"type": "array", "items": {"type": "string"}},
+        "pregunta_interactiva": {"type": "string"},
+        "respuesta_clave": {"type": ["string", "null"]},
+        "actividades_por_grado": {"type": "array", "items": _GRADE_TASK_SCHEMA},
+        "materiales": {"type": "array", "items": {"type": "string"}},
+        "momentos": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "momento": {"type": "string"},
+                    "duracion_minutos": {"type": "integer"},
+                    "descripcion": {"type": "string"},
+                },
+                "required": ["momento", "duracion_minutos", "descripcion"],
+                "additionalProperties": False,
+            },
+        },
+        "actividades_por_grupo": {"type": "array", "items": _GROUP_ACTIVITY_SCHEMA},
+        "sugerencia_evaluacion": {"type": "string"},
+        "contexto_local": {"type": "string"},
+    },
+    "required": [
+        "titulo", "area", "tema", "grado_grupo", "duracion_minutos", "proposito",
+        "texto_o_situacion", "texto_partes", "pregunta_interactiva", "respuesta_clave",
+        "actividades_por_grado", "materiales", "momentos", "actividades_por_grupo",
+        "sugerencia_evaluacion", "contexto_local",
+    ],
+    "additionalProperties": False,
+}
+
+_CLAUDE_SYSTEM_PROMPT = (
+    "Eres un asistente pedagogico para un docente de primaria rural multigrado en Peru "
+    "(varios grados en una misma aula, pocos recursos, sin internet garantizado). Generas "
+    "cuentos y situaciones matematicas contextualizados a la vida rural peruana (chacra, "
+    "feria, animales, rio), en español sencillo y calido, nunca con clichés forzados. "
+    "Para Matematica, el problema debe incluir cantidades numericas reales y resolverse "
+    "exactamente con los datos dados; 'respuesta_clave' debe ser el resultado correcto. "
+    "Para Comunicacion, el cuento tiene 5 partes breves (texto_partes) y texto_o_situacion es "
+    "su union. Todas las preguntas deben referirse al texto/situacion especifica generada, "
+    "nunca ser genericas. No incluyas nombres de estudiantes reales ni datos personales."
+)
+
+
+class ClaudeAIProvider(AIProvider):
+    """Pensado para usarse con una API key propia durante una presentacion/demo
+    en vivo. No es requisito para que el MVP funcione: sin ANTHROPIC_API_KEY,
+    get_ai_provider() nunca selecciona este proveedor."""
+
+    name = "claude"
+
+    def __init__(self):
+        self.model = settings.claude_model
+        self.fallback = DemoAIProvider()
+        self._client = (
+            anthropic.Anthropic(api_key=settings.anthropic_api_key)
+            if settings.anthropic_api_key
+            else None
+        )
+
+    def status(self) -> dict[str, Any]:
+        if not self._client:
+            return {
+                "provider_active": "demo (sin ANTHROPIC_API_KEY)",
+                "message": "Configura ANTHROPIC_API_KEY para usar Claude en la presentacion.",
+            }
+        return {
+            "provider_active": f"claude ({self.model})",
+            "message": f"Usando la API de Claude ({self.model}) para generar contenido.",
+        }
+
+    def _call_claude(self, prompt: str, schema: dict[str, Any]) -> dict[str, Any] | None:
+        if not self._client:
+            return None
+        try:
+            response = self._client.messages.create(
+                model=self.model,
+                max_tokens=4000,
+                system=_CLAUDE_SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": prompt}],
+                output_config={"format": {"type": "json_schema", "schema": schema}},
+            )
+            text = next((b.text for b in response.content if b.type == "text"), None)
+            if not text:
+                return None
+            return json.loads(text)
+        except Exception:
+            return None
+
+    def generate_material(self, req: dict[str, Any]) -> AIGenerationResult:
+        area = req["area"]
+        grades = req.get("grades") or []
+        prompt = (
+            f"Genera una ficha diferenciada en español para primaria rural multigrado. "
+            f"Area: {area}. Tema: {req['topic']}. Grados presentes en la misma aula: {grades}. "
+            f"Niveles de apoyo presentes: {req.get('support_levels')}. "
+            f"Contexto local indicado por el docente: {req.get('local_context') or 'ninguno'}. "
+            f"Recursos disponibles: {req.get('available_resources') or 'los usuales del aula'}. "
+            f"En 'actividades_por_grado' incluye una tarea distinta por cada grado de {grades} "
+            "sobre el MISMO texto/situacion, con exigencia creciente segun el grado."
+        )
+        result = self._call_claude(prompt, MATERIAL_JSON_SCHEMA)
+        if result is None:
+            fallback = self.fallback.generate_material(req)
+            fallback.note = "Claude no respondio (sin API key, error o limite). Se uso la plantilla de demostracion."
+            return fallback
+        result["aviso"] = f"Contenido generado por Claude ({self.model}). El docente debe revisarlo antes de aplicarlo."
+        return AIGenerationResult(content=result, provider_used="claude")
+
+    def generate_lesson(self, req: dict[str, Any]) -> AIGenerationResult:
+        area = req["area"]
+        grades = req.get("grades") or []
+        prompt = (
+            f"Genera un plan de sesion en español para primaria rural multigrado. "
+            f"Area: {area}. Tema: {req['topic']}. Grados presentes: {grades}. "
+            f"Duracion total: {req.get('duration_minutes')} minutos. "
+            f"Niveles de apoyo presentes: {req.get('support_levels')}. "
+            f"Contexto local indicado por el docente: {req.get('local_context') or 'ninguno'}. "
+            f"En 'actividades_por_grado' incluye una tarea distinta por cada grado de {grades} "
+            "sobre el MISMO texto/situacion, con exigencia creciente segun el grado."
+        )
+        result = self._call_claude(prompt, LESSON_JSON_SCHEMA)
+        if result is None:
+            fallback = self.fallback.generate_lesson(req)
+            fallback.note = "Claude no respondio (sin API key, error o limite). Se uso la plantilla de demostracion."
+            return fallback
+        result["aviso"] = f"Contenido generado por Claude ({self.model}). El docente debe revisarlo antes de aplicarlo."
+        return AIGenerationResult(content=result, provider_used="claude")
+
+
 def get_ai_provider() -> AIProvider:
     if settings.ai_provider == "ollama":
         return OllamaAIProvider()
+    if settings.ai_provider == "claude":
+        return ClaudeAIProvider()
     return DemoAIProvider()
