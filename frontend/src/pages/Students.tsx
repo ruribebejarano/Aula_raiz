@@ -9,7 +9,6 @@ import {
   EmptyState,
   ErrorState,
   LoadingState,
-  PageTitle,
   SupportBadge,
 } from "../components/Common";
 
@@ -35,8 +34,7 @@ export default function Students() {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <PageTitle title="Estudiantes" subtitle="Lista con codigo anonimo, grado y ultimo resultado" />
+      <div className="flex items-center justify-end gap-3 flex-wrap mb-4">
         <Button onClick={() => setShowForm((v) => !v)} className="flex items-center gap-1.5">
           {showForm ? <X size={16} /> : <Plus size={16} />}
           {showForm ? "Cancelar" : "Registrar estudiante"}

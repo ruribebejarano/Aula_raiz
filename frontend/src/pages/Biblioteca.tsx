@@ -5,6 +5,12 @@ import type { LessonPlan, Material } from "../api/types";
 import { Button, Card, EmptyState, LoadingState, PageTitle } from "../components/Common";
 import RadioAulaButton from "../components/RadioAulaButton";
 
+const PROVIDER_LABELS: Record<string, string> = {
+  demo: "Plantilla demo",
+  ollama: "Ollama",
+  claude: "Claude",
+};
+
 const AREAS = ["Comunicacion", "Matematica"];
 const SUPPORT_LEVELS = [
   "Requiere acompanamiento prioritario",
@@ -76,17 +82,11 @@ export default function Biblioteca() {
 
   return (
     <div>
-      <PageTitle
-        title="Biblioteca IA"
-        subtitle="Genera una sesion o ficha diferenciada lista para imprimir"
-      />
+      <PageTitle title="Biblioteca IA" subtitle="Ficha o sesion diferenciada, lista para imprimir" />
 
-      <Card className="mb-6 bg-forest-50/60 border-forest-100">
-        <h3 className="font-display font-bold text-forest-800 mb-1">RADIO AULA</h3>
-        <p className="text-sm text-forest-700/70 mb-3">
-          Prueba aqui la lectura en voz alta antes de generar una ficha completa.
-        </p>
-        <RadioAulaButton text="Esta es una prueba de RADIO AULA. Si escuchas esta frase, tu navegador puede leer en voz alta las instrucciones y actividades de la Biblioteca IA." />
+      <Card className="mb-6 bg-forest-50/60 border-forest-100 flex items-center gap-3 flex-wrap">
+        <span className="text-sm font-semibold text-forest-800">RADIO AULA</span>
+        <RadioAulaButton text="Esta es una prueba de RADIO AULA. Si escuchas esta frase, tu navegador puede leer en voz alta las fichas generadas." />
       </Card>
 
       <Card className="mb-6">
@@ -171,37 +171,41 @@ export default function Biblioteca() {
             </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-forest-700">Duracion (minutos)</label>
-              <input
-                type="number"
-                min={10}
-                value={duration}
-                onChange={(e) => setDuration(Number(e.target.value))}
-                className="w-full mt-1 rounded-lg border border-forest-100 px-3 py-2 text-sm"
-              />
+          <details className="group">
+            <summary className="text-xs font-semibold text-forest-600 cursor-pointer select-none">
+              Mas opciones (duracion, recursos, contexto local)
+            </summary>
+            <div className="grid sm:grid-cols-2 gap-3 mt-3">
+              <div>
+                <label className="text-xs font-medium text-forest-700">Duracion (minutos)</label>
+                <input
+                  type="number"
+                  min={10}
+                  value={duration}
+                  onChange={(e) => setDuration(Number(e.target.value))}
+                  className="w-full mt-1 rounded-lg border border-forest-100 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-forest-700">Recursos disponibles</label>
+                <input
+                  value={resources}
+                  onChange={(e) => setResources(e.target.value)}
+                  placeholder="Piedritas, cuadernos..."
+                  className="w-full mt-1 rounded-lg border border-forest-100 px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-xs font-medium text-forest-700">Contexto local</label>
+                <input
+                  value={context}
+                  onChange={(e) => setContext(e.target.value)}
+                  placeholder="Chacra, feria, rio cercano..."
+                  className="w-full mt-1 rounded-lg border border-forest-100 px-3 py-2 text-sm"
+                />
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-medium text-forest-700">Recursos disponibles (opcional)</label>
-              <input
-                value={resources}
-                onChange={(e) => setResources(e.target.value)}
-                placeholder="Piedritas, cuadernos..."
-                className="w-full mt-1 rounded-lg border border-forest-100 px-3 py-2 text-sm"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-medium text-forest-700">Contexto local (opcional)</label>
-            <input
-              value={context}
-              onChange={(e) => setContext(e.target.value)}
-              placeholder="Chacra, feria, rio cercano..."
-              className="w-full mt-1 rounded-lg border border-forest-100 px-3 py-2 text-sm"
-            />
-          </div>
+          </details>
 
           <Button type="submit" disabled={submitting}>
             {submitting ? "Generando..." : format === "ficha" ? "Crear ficha" : "Crear sesion"}
@@ -225,7 +229,7 @@ export default function Biblioteca() {
             >
               <p className="font-medium text-forest-800">{m.title}</p>
               <p className="text-xs text-forest-700/60">
-                {m.area} · {m.grade_range} · {m.provider === "demo" ? "Plantilla demo" : "Generado por Ollama"}
+                {m.area} · {m.grade_range} · {PROVIDER_LABELS[m.provider] ?? m.provider}
               </p>
             </Card>
           ))}
@@ -246,7 +250,9 @@ export default function Biblioteca() {
               onClick={() => navigate(`/biblioteca/sesion/${l.id}`)}
             >
               <p className="font-medium text-forest-800">{l.title}</p>
-              <p className="text-xs text-forest-700/60">{l.duration_minutes} min</p>
+              <p className="text-xs text-forest-700/60">
+                {l.duration_minutes} min · {PROVIDER_LABELS[l.provider] ?? l.provider}
+              </p>
             </Card>
           ))}
         </div>

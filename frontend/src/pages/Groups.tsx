@@ -7,7 +7,6 @@ import {
   EmptyState,
   ErrorState,
   LoadingState,
-  PageTitle,
   SupportBadge,
 } from "../components/Common";
 
@@ -41,11 +40,7 @@ export default function Groups() {
 
   return (
     <div>
-      <div className="flex items-start justify-between flex-wrap gap-3">
-        <PageTitle
-          title="Grupos de aprendizaje"
-          subtitle="Sugerencia por competencia y nivel de apoyo. Siempre editable por el docente."
-        />
+      <div className="flex items-center justify-end gap-3 flex-wrap mb-4">
         <Button onClick={recalc} disabled={recalculating}>
           {recalculating ? "Recalculando..." : "Recalcular agrupacion"}
         </Button>

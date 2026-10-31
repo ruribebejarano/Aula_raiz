@@ -63,8 +63,7 @@ export default function Dashboard() {
               Tu ecosistema AULA RAIZ
             </h2>
             <p className="text-sm text-forest-100/80 mt-2 max-w-md">
-              Diagnostica, agrupa, genera materiales y sigue el avance de tu aula multigrado,
-              sin depender de internet externo.
+              Diagnostica, genera materiales y sigue el avance — sin internet.
             </p>
           </div>
           {data.is_demo_data && <DemoTag />}
@@ -143,24 +142,16 @@ export default function Dashboard() {
             <li>Internet externo: {health?.internet_external ?? "no verificado"}</li>
             <li>Motor IA: {health?.ai_mode ?? "verificando..."}</li>
           </ul>
-          <p className="text-xs text-forest-700/60 mt-3">
-            AULA BOX es la computadora local que sirve esta aplicacion por Wi-Fi. El celular del
-            docente se conecta a esa red, sin necesidad de internet externo.
-          </p>
         </Card>
 
         <Card>
           <h3 className="font-display font-bold text-forest-800 mb-2">Pendientes de revision</h3>
-          {data.pending_review > 0 ? (
-            <p className="text-sm text-forest-700/80">
-              {data.pending_review} estudiante(s) aun no tienen un diagnostico registrado.
-            </p>
-          ) : (
-            <p className="text-sm text-forest-700/80">
-              Todos los estudiantes activos tienen al menos un resultado registrado.
-            </p>
-          )}
-          <Link to="/diagnostico">
+          <p className="text-sm text-forest-700/80">
+            {data.pending_review > 0
+              ? `${data.pending_review} estudiante(s) sin diagnostico.`
+              : "Todos tienen al menos un resultado registrado."}
+          </p>
+          <Link to="/estudiantes?tab=diagnostico">
             <Button className="mt-3">Registrar diagnostico</Button>
           </Link>
         </Card>

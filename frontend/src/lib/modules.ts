@@ -27,8 +27,7 @@ export const MODULES: ModuleInfo[] = [
     key: "aula-box",
     name: "AULA BOX",
     tagline: "El centro local del sistema",
-    description:
-      "Corre en una computadora del colegio y crea una red Wi-Fi propia: todo funciona aunque no haya internet.",
+    description: "Red Wi-Fi propia del colegio: funciona sin internet.",
     icon: ServerCog,
     to: "/configuracion",
     accent: {
@@ -42,10 +41,9 @@ export const MODULES: ModuleInfo[] = [
     key: "nivela-ai",
     name: "NIVELA AI",
     tagline: "Diagnostico y agrupacion",
-    description:
-      "Usa las competencias reales del Curriculo Nacional (CNEB - Minedu) para organizar en minutos quien necesita reforzar que, y por que.",
+    description: "Competencias reales del CNEB (Minedu): quien necesita reforzar que.",
     icon: ClipboardCheck,
-    to: "/diagnostico",
+    to: "/estudiantes?tab=diagnostico",
     accent: {
       bg: "bg-forest-100",
       text: "text-forest-800",
@@ -57,8 +55,7 @@ export const MODULES: ModuleInfo[] = [
     key: "radar-educativo",
     name: "RADAR EDUCATIVO",
     tagline: "Seguimiento del progreso",
-    description:
-      "Un radar real por competencia, no solo barras: muestra de un vistazo donde esta fuerte y donde floja el aula.",
+    description: "Radar real por competencia: fuerte vs. flojo, de un vistazo.",
     icon: RadarIcon,
     to: "/radar",
     accent: {
@@ -72,8 +69,7 @@ export const MODULES: ModuleInfo[] = [
     key: "biblioteca-ia",
     name: "BIBLIOTECA IA",
     tagline: "Cuentos y problemas interactivos",
-    description:
-      "Genera cuentos y problemas reales (con numeros y respuesta, no solo ambientacion) y presentalos en Modo interactivo, a pantalla completa, con una pausa para que el aula prediga antes del final.",
+    description: "Cuentos y problemas con numeros reales, en Modo interactivo a pantalla completa.",
     icon: BookOpenText,
     to: "/biblioteca",
     accent: {
@@ -87,8 +83,7 @@ export const MODULES: ModuleInfo[] = [
     key: "radio-aula",
     name: "RADIO AULA",
     tagline: "Acceso por voz",
-    description:
-      "Lee instrucciones y actividades en voz alta, para llegar tambien sin depender de una pantalla.",
+    description: "Lee instrucciones en voz alta: sin depender de una pantalla.",
     icon: Volume2,
     to: "/biblioteca",
     accent: {

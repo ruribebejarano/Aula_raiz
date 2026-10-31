@@ -6,7 +6,7 @@ import {
   listStudents,
 } from "../api/endpoints";
 import type { Assessment, Competency, Student } from "../api/types";
-import { Button, Card, CnebBadge, LoadingState, PageTitle, SupportBadge } from "../components/Common";
+import { Button, Card, CnebBadge, LoadingState, SupportBadge } from "../components/Common";
 
 const QUIZ_ITEMS = [
   "Pregunta de ejemplo 1: resolvio correctamente el primer ejercicio.",
@@ -82,11 +82,6 @@ export default function Diagnostico() {
 
   return (
     <div>
-      <PageTitle
-        title="Diagnostico NIVELA AI"
-        subtitle="Registra un resultado breve y obten un nivel de apoyo orientativo"
-      />
-
       <Card className="mb-6">
         <form onSubmit={submit} className="space-y-4">
           <div className="grid sm:grid-cols-2 gap-3">
@@ -228,21 +223,15 @@ export default function Diagnostico() {
         </Card>
       )}
 
-      <Card className="mb-6">
-        <h3 className="font-semibold text-forest-800 mb-2">Regla de clasificacion (transparente)</h3>
-        <p className="text-sm text-forest-700/80">{rule}</p>
-      </Card>
-
       <Card className="bg-forest-50/50 border-forest-100">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <h3 className="font-semibold text-forest-800">Regla de clasificacion</h3>
           <CnebBadge source="Curriculo Nacional de la Educacion Basica (CNEB), Minedu 2016" />
-          <h3 className="font-semibold text-forest-800">De donde salen estas competencias</h3>
         </div>
-        <p className="text-sm text-forest-700/80">
-          Los nombres de las competencias (por ejemplo, "Resuelve problemas de cantidad" o "Lee
-          diversos tipos de textos escritos en su lengua materna") estan tomados tal cual del
-          Curriculo Nacional de la Educacion Basica del Minedu, no son etiquetas inventadas para
-          la demo. Los umbrales de puntaje si son ilustrativos del prototipo.
+        <p className="text-sm text-forest-700/80">{rule}</p>
+        <p className="text-xs text-forest-700/60 mt-2">
+          Las competencias son las del CNEB tal cual; los umbrales de puntaje son ilustrativos del
+          prototipo.
         </p>
       </Card>
     </div>

@@ -80,7 +80,7 @@ export default function StudentDetail() {
         )}
       </Card>
 
-      <Link to="/diagnostico">
+      <Link to="/estudiantes?tab=diagnostico">
         <Button>Registrar nuevo diagnostico</Button>
       </Link>
     </div>

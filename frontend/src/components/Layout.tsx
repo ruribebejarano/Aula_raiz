@@ -1,9 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
-  Blocks,
   BookOpenText,
-  ClipboardCheck,
   Home,
   Radar as RadarIcon,
   Settings,
@@ -17,8 +15,6 @@ import { LogoLockup, LogoMark } from "./Logo";
 const NAV_ITEMS: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/", label: "Inicio", icon: Home },
   { to: "/estudiantes", label: "Estudiantes", icon: Users },
-  { to: "/diagnostico", label: "Diagnostico", icon: ClipboardCheck },
-  { to: "/grupos", label: "Grupos", icon: Blocks },
   { to: "/biblioteca", label: "Biblioteca IA", icon: BookOpenText },
   { to: "/radar", label: "Radar", icon: RadarIcon },
   { to: "/configuracion", label: "Configuracion", icon: Settings },
