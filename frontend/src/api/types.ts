@@ -15,6 +15,7 @@ export interface Competency {
   area: string;
   name: string;
   description: string | null;
+  curricular_source: string | null;
 }
 
 export interface Assessment {
@@ -58,6 +59,8 @@ export interface MaterialContent {
   grado_grupo: string;
   proposito: string;
   texto_o_situacion: string;
+  pregunta_interactiva: string;
+  respuesta_clave: string | null;
   materiales: string[];
   instrucciones: string[];
   actividades_por_grupo: { grupo: string; actividad: string }[];
@@ -88,6 +91,8 @@ export interface LessonContent {
   duracion_minutos: number;
   proposito: string;
   texto_o_situacion: string;
+  pregunta_interactiva: string;
+  respuesta_clave: string | null;
   materiales: string[];
   momentos: { momento: string; duracion_minutos: number; descripcion: string }[];
   actividades_por_grupo: { grupo: string; actividad: string }[];

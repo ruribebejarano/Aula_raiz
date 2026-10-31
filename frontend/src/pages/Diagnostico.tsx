@@ -121,6 +121,12 @@ export default function Diagnostico() {
                   </option>
                 ))}
               </select>
+              {competencyId !== "" &&
+                competencies.find((c) => c.id === competencyId)?.curricular_source && (
+                  <p className="text-[11px] text-forest-700/60 mt-1">
+                    Competencia del {competencies.find((c) => c.id === competencyId)?.curricular_source}
+                  </p>
+                )}
             </div>
           </div>
 

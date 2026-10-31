@@ -11,6 +11,12 @@ router = APIRouter(prefix="/api/competencies", tags=["competencies"])
 def list_competencies(session: Session = Depends(get_session)):
     comps = session.exec(select(Competency).order_by(Competency.area, Competency.name)).all()
     return [
-        {"id": c.id, "area": c.area, "name": c.name, "description": c.description}
+        {
+            "id": c.id,
+            "area": c.area,
+            "name": c.name,
+            "description": c.description,
+            "curricular_source": c.curricular_source,
+        }
         for c in comps
     ]

@@ -15,13 +15,17 @@ from app.models import (
 )
 from app.rules import classify_score
 
+CNEB = "Curriculo Nacional de la Educacion Basica (CNEB), Minedu 2016"
+
+# Nombres de competencia tomados tal cual del CNEB (Minedu), no inventados.
+# Fuente: https://www.minedu.gob.pe/curriculo/pdf/curriculo-nacional-2016.pdf
 COMPETENCIES = [
-    ("Matematica", "Reconoce numeros", "Identifica y representa cantidades."),
-    ("Matematica", "Suma cantidades", "Resuelve problemas aditivos sencillos."),
-    ("Matematica", "Resuelve problemas con figuras", "Reconoce y compara figuras geometricas basicas."),
-    ("Comunicacion", "Comprension de textos", "Comprende textos cortos adecuados a su grado."),
-    ("Comunicacion", "Produccion escrita", "Escribe oraciones y textos breves con sentido."),
-    ("Comunicacion", "Expresion oral", "Comunica ideas de forma oral con claridad."),
+    ("Matematica", "Resuelve problemas de cantidad", "Usa numeros y operaciones para representar y resolver situaciones.", CNEB),
+    ("Matematica", "Resuelve problemas de regularidad, equivalencia y cambio", "Identifica patrones, equivalencias y relaciones de cambio.", CNEB),
+    ("Matematica", "Resuelve problemas de forma, movimiento y localizacion", "Reconoce, compara y describe formas y ubicaciones.", CNEB),
+    ("Comunicacion", "Lee diversos tipos de textos escritos en su lengua materna", "Comprende textos adecuados a su grado, identificando ideas explicitas e implicitas.", CNEB),
+    ("Comunicacion", "Escribe diversos tipos de textos en su lengua materna", "Produce textos breves con coherencia y proposito claro.", CNEB),
+    ("Comunicacion", "Se comunica oralmente en su lengua materna", "Expresa y comprende ideas de forma oral, adaptandose a la situacion comunicativa.", CNEB),
 ]
 
 STUDENTS = [
@@ -40,8 +44,8 @@ def seed_if_empty(session: Session) -> None:
         return
 
     competencies: list[Competency] = []
-    for area, name, description in COMPETENCIES:
-        comp = Competency(area=area, name=name, description=description)
+    for area, name, description, source in COMPETENCIES:
+        comp = Competency(area=area, name=name, description=description, curricular_source=source)
         session.add(comp)
         competencies.append(comp)
     session.commit()
@@ -88,8 +92,11 @@ def seed_if_empty(session: Session) -> None:
         "texto_o_situacion": (
             "En la chacra de la familia Quispe, todos ayudan segun su edad: los mas pequeños "
             "recogen las hojas sueltas, mientras los mayores preparan la tierra para la siguiente "
-            "siembra. Cuando termina el dia, se reunen a conversar sobre lo que sembraron."
+            "siembra.\n\nCuando termina el dia, se reunen a conversar sobre lo que sembraron, y "
+            "deciden anotar en un cuaderno lo que aprendieron para no olvidarlo."
         ),
+        "pregunta_interactiva": "Antes de seguir leyendo: ¿que creen que anotaron en el cuaderno?",
+        "respuesta_clave": None,
         "materiales": ["Ficha impresa", "Lapiz"],
         "instrucciones": ["Lee el texto en voz alta.", "Responde las preguntas segun tu nivel."],
         "actividades_por_grupo": [

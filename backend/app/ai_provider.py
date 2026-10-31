@@ -20,6 +20,7 @@ from typing import Any
 import httpx
 
 from app.config import settings
+from app.storyteller import generate_math_situation, generate_story
 
 GRADE_RANGE_LABELS = {
     1: "1er grado",
@@ -119,57 +120,6 @@ class DemoAIProvider(AIProvider):
         pairs = bank.get(level, bank["En desarrollo"])
         return [{"enunciado": q, "pauta_de_revision": a} for q, a in pairs]
 
-    def _reading_text(self, topic: str, local_context: str | None) -> str:
-        place = local_context.strip() if local_context else "la comunidad"
-        templates = [
-            (
-                f"En {place}, las familias se preparan temprano para el dia. Hoy el tema es '{topic}': "
-                f"los ninos observan con atencion mientras los mayores explican cada paso, porque saben "
-                f"que lo aprendido les sera util mas adelante."
-            ),
-            (
-                f"Cerca de {place} vive Rosa, una niña curiosa a la que le gusta preguntar el porque de "
-                f"las cosas. Esta semana descubrio algo relacionado con '{topic}' y quiso compartirlo con "
-                f"toda su aula multigrado."
-            ),
-            (
-                f"Cuando llega la epoca de trabajar en {place}, todos colaboran segun su edad. Mientras "
-                f"ayudan, los estudiantes practican lo que han aprendido sobre '{topic}', comentando entre "
-                f"ellos lo que notan."
-            ),
-            (
-                f"Don Mario camina hacia {place} llevando sus herramientas. En el camino le cuenta a su "
-                f"nieto una historia relacionada con '{topic}', y entre los dos van resolviendo las dudas "
-                f"que surgen."
-            ),
-        ]
-        idx = (len(topic) + len(place)) % len(templates)
-        return templates[idx]
-
-    def _situation_text(self, topic: str, local_context: str | None) -> str:
-        place = local_context.strip() if local_context else "la comunidad"
-        templates = [
-            (
-                f"En {place} se organizo una actividad relacionada con '{topic}'. Para resolverla, los "
-                f"estudiantes deben usar lo que saben sobre cantidades, orden o comparacion, igual que lo "
-                f"haria alguien resolviendo esa misma tarea en la vida diaria."
-            ),
-            (
-                f"Durante la cosecha en {place}, una familia necesita repartir y contar lo que consiguio. "
-                f"La situacion de '{topic}' les ayuda a organizar esa informacion de forma ordenada."
-            ),
-            (
-                f"En la feria cerca de {place}, varios puestos venden productos distintos. Resolver el "
-                f"problema de '{topic}' ayuda a entender mejor lo que ahi sucede con las cantidades."
-            ),
-            (
-                f"Un grupo de estudiantes de {place} decidio medir y comparar objetos de su entorno para "
-                f"practicar '{topic}' antes de aplicarlo en una tarea mas grande."
-            ),
-        ]
-        idx = (len(topic) + len(place)) % len(templates)
-        return templates[idx]
-
     def generate_material(self, req: dict[str, Any]) -> AIGenerationResult:
         area = req["area"]
         topic = req["topic"]
@@ -178,12 +128,19 @@ class DemoAIProvider(AIProvider):
         duration = req.get("duration_minutes", 45)
         available_resources = req.get("available_resources")
         local_context = req.get("local_context")
+        variant = int(req.get("variant") or 0)
         is_comunicacion = area.lower().startswith("com")
-        texto_o_situacion = (
-            self._reading_text(topic, local_context)
-            if is_comunicacion
-            else self._situation_text(topic, local_context)
-        )
+
+        respuesta_clave = None
+        if is_comunicacion:
+            story = generate_story(topic, local_context, variant)
+            texto_o_situacion = story["texto"]
+            pregunta_interactiva = story["pregunta_interactiva"]
+        else:
+            situacion = generate_math_situation(topic, local_context, grades, variant)
+            texto_o_situacion = situacion["texto"]
+            pregunta_interactiva = situacion["pregunta_interactiva"]
+            respuesta_clave = situacion["respuesta_clave"]
 
         group_activities = []
         all_questions: list[dict[str, str]] = []
@@ -209,13 +166,15 @@ class DemoAIProvider(AIProvider):
                 f"{area}, trabajando con actividades adecuadas a su nivel de apoyo actual."
             ),
             "texto_o_situacion": texto_o_situacion,
+            "pregunta_interactiva": pregunta_interactiva,
+            "respuesta_clave": respuesta_clave,
             "materiales": self._materials_for(area, available_resources),
             "instrucciones": [
                 "Organiza a los estudiantes segun el grupo/nivel indicado por NIVELA AI.",
                 (
-                    "Lee en voz alta el texto presentado arriba (o usa RADIO AULA)."
+                    "Lee en voz alta el texto presentado arriba (o usa RADIO AULA) y haz la pregunta interactiva antes de seguir."
                     if is_comunicacion
-                    else "Presenta la situacion descrita arriba antes de los ejercicios."
+                    else "Presenta la situacion descrita arriba y haz la pregunta interactiva antes de resolverla juntos."
                 ),
                 "Entrega la ficha correspondiente a cada grupo.",
                 "Circula entre los grupos para observar el procedimiento, no solo el resultado.",
@@ -239,12 +198,19 @@ class DemoAIProvider(AIProvider):
         levels = req.get("support_levels") or ["En desarrollo"]
         duration = req.get("duration_minutes", 45)
         local_context = req.get("local_context")
+        variant = int(req.get("variant") or 0)
         is_comunicacion = area.lower().startswith("com")
-        texto_o_situacion = (
-            self._reading_text(topic, local_context)
-            if is_comunicacion
-            else self._situation_text(topic, local_context)
-        )
+
+        respuesta_clave = None
+        if is_comunicacion:
+            story = generate_story(topic, local_context, variant)
+            texto_o_situacion = story["texto"]
+            pregunta_interactiva = story["pregunta_interactiva"]
+        else:
+            situacion = generate_math_situation(topic, local_context, grades, variant)
+            texto_o_situacion = situacion["texto"]
+            pregunta_interactiva = situacion["pregunta_interactiva"]
+            respuesta_clave = situacion["respuesta_clave"]
 
         per_group_minutes = max(8, duration // max(1, len(levels) + 1))
         content = {
@@ -258,6 +224,8 @@ class DemoAIProvider(AIProvider):
                 f"distintos grados y niveles de apoyo presentes en el aula multigrado."
             ),
             "texto_o_situacion": texto_o_situacion,
+            "pregunta_interactiva": pregunta_interactiva,
+            "respuesta_clave": respuesta_clave,
             "materiales": self._materials_for(area, req.get("available_resources")),
             "momentos": [
                 {
@@ -360,24 +328,35 @@ class OllamaAIProvider(AIProvider):
 
     def generate_material(self, req: dict[str, Any]) -> AIGenerationResult:
         area = req["area"]
+        is_comunicacion = area.lower().startswith("com")
         text_label = (
-            "un texto breve de lectura (2 a 4 oraciones, en español sencillo, contextualizado a una "
-            "comunidad rural y al tema)"
-            if area.lower().startswith("com")
-            else "una situacion breve (2 a 4 oraciones) que contextualice el problema en la vida de una "
-            "comunidad rural"
+            "un cuento breve pero completo (3 parrafos cortos: presentacion, desarrollo y cierre, en "
+            "español sencillo) protagonizado por un niño o niña, contextualizado a una comunidad rural "
+            "y relacionado con el tema"
+            if is_comunicacion
+            else "un problema matematico contextualizado en una comunidad rural que incluya cantidades "
+            "numericas concretas y pueda resolverse con los datos dados (no solo ambientacion)"
         )
         prompt = (
             f"Genera una ficha diferenciada en español para primaria rural multigrado. "
             f"Area: {area}. Tema: {req['topic']}. Grados: {req.get('grades')}. "
             f"Niveles de apoyo presentes: {req.get('support_levels')}. "
             f"Contexto local indicado por el docente: {req.get('local_context') or 'ninguno'}. "
-            f"Incluye en 'texto_o_situacion' {text_label}; las preguntas deben referirse a ese texto o "
-            "situacion, no ser genericas. "
-            "Responde en JSON con claves: titulo, area, tema, grado_grupo, proposito, texto_o_situacion, "
-            "materiales (lista), instrucciones (lista), actividades_por_grupo (lista de objetos "
-            "grupo/actividad), preguntas (lista de objetos enunciado/pauta_de_revision), adaptacion "
-            "(objeto reforzar/ampliar), indicacion_impresion, contexto_local."
+            f"Incluye en 'texto_o_situacion' {text_label}. Las preguntas deben referirse a ese texto o "
+            "situacion especifica, nunca ser genericas. Incluye tambien 'pregunta_interactiva': una sola "
+            "pregunta breve para que el docente pause la lectura o el calculo y genere discusion en el "
+            "aula antes de revelar el final o el resultado (tecnica de lectura interactiva / antes-durante-"
+            "despues usada en aulas multigrado). "
+            + (
+                "Incluye 'respuesta_clave' con el resultado numerico correcto del problema, como texto."
+                if not is_comunicacion
+                else "Deja 'respuesta_clave' como null."
+            )
+            + " Responde en JSON con claves: titulo, area, tema, grado_grupo, proposito, texto_o_situacion, "
+            "pregunta_interactiva, respuesta_clave, materiales (lista), instrucciones (lista), "
+            "actividades_por_grupo (lista de objetos grupo/actividad), preguntas (lista de objetos "
+            "enunciado/pauta_de_revision), adaptacion (objeto reforzar/ampliar), indicacion_impresion, "
+            "contexto_local."
         )
         result = self._call_ollama(prompt)
         if result is None:
@@ -389,10 +368,13 @@ class OllamaAIProvider(AIProvider):
 
     def generate_lesson(self, req: dict[str, Any]) -> AIGenerationResult:
         area = req["area"]
+        is_comunicacion = area.lower().startswith("com")
         text_label = (
-            "un texto breve de lectura (2 a 4 oraciones) contextualizado a una comunidad rural"
-            if area.lower().startswith("com")
-            else "una situacion breve (2 a 4 oraciones) que contextualice el problema en una comunidad rural"
+            "un cuento breve pero completo (presentacion, desarrollo y cierre) contextualizado a una "
+            "comunidad rural"
+            if is_comunicacion
+            else "un problema matematico contextualizado en una comunidad rural con cantidades numericas "
+            "concretas y resoluble con los datos dados"
         )
         prompt = (
             f"Genera un plan de sesion en español para primaria rural multigrado. "
@@ -400,10 +382,16 @@ class OllamaAIProvider(AIProvider):
             f"Duracion total: {req.get('duration_minutes')} minutos. "
             f"Niveles de apoyo presentes: {req.get('support_levels')}. "
             f"Contexto local indicado por el docente: {req.get('local_context') or 'ninguno'}. "
-            f"Incluye en 'texto_o_situacion' {text_label}. "
-            "Responde en JSON con claves: titulo, area, tema, grado_grupo, duracion_minutos, proposito, "
-            "texto_o_situacion, materiales (lista), momentos (lista de objetos "
-            "momento/duracion_minutos/descripcion), actividades_por_grupo (lista de objetos "
+            f"Incluye en 'texto_o_situacion' {text_label}, y en 'pregunta_interactiva' una pregunta breve "
+            "para pausar y generar discusion antes del cierre. "
+            + (
+                "Incluye 'respuesta_clave' con el resultado numerico correcto, como texto."
+                if not is_comunicacion
+                else "Deja 'respuesta_clave' como null."
+            )
+            + " Responde en JSON con claves: titulo, area, tema, grado_grupo, duracion_minutos, proposito, "
+            "texto_o_situacion, pregunta_interactiva, respuesta_clave, materiales (lista), momentos (lista "
+            "de objetos momento/duracion_minutos/descripcion), actividades_por_grupo (lista de objetos "
             "grupo/actividad), sugerencia_evaluacion, contexto_local."
         )
         result = self._call_ollama(prompt)

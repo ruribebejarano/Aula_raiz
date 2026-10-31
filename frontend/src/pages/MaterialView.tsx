@@ -1,15 +1,27 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { listLessons, listMaterials } from "../api/endpoints";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { RefreshCw } from "lucide-react";
+import { generateLesson, generateMaterial, listLessons, listMaterials } from "../api/endpoints";
 import type { LessonPlan, Material } from "../api/types";
 import { Button, ErrorState, LoadingState } from "../components/Common";
 import RadioAulaButton from "../components/RadioAulaButton";
 
+interface RegenerateState {
+  regeneratePayload?: Record<string, unknown>;
+  kind?: "material" | "lesson";
+  variant?: number;
+}
+
 export default function MaterialView({ type }: { type: "material" | "lesson" }) {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [material, setMaterial] = useState<Material | null>(null);
   const [lesson, setLesson] = useState<LessonPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
+
+  const state = (location.state as RegenerateState | null) ?? null;
 
   useEffect(() => {
     if (type === "material") {
@@ -39,16 +51,50 @@ export default function MaterialView({ type }: { type: "material" | "lesson" }) 
     type === "material" && material
       ? [
           material.content.texto_o_situacion,
+          material.content.pregunta_interactiva,
           ...material.content.instrucciones,
           ...material.content.preguntas.map((p) => p.enunciado),
         ].join(". ")
       : type === "lesson" && lesson
       ? [
           lesson.content.texto_o_situacion,
+          lesson.content.pregunta_interactiva,
           lesson.content.proposito,
           ...lesson.content.momentos.map((m) => m.descripcion),
         ].join(". ")
       : "";
+
+  const regenerate = async () => {
+    if (!state?.regeneratePayload) return;
+    setRegenerating(true);
+    const nextVariant = (state.variant ?? 0) + 1;
+    try {
+      if (type === "material") {
+        const m = await generateMaterial({
+          ...(state.regeneratePayload as any),
+          format: "ficha",
+          variant: nextVariant,
+        });
+        navigate(`/biblioteca/material/${m.id}`, {
+          replace: true,
+          state: { ...state, variant: nextVariant },
+        });
+      } else {
+        const l = await generateLesson({
+          ...(state.regeneratePayload as any),
+          variant: nextVariant,
+        });
+        navigate(`/biblioteca/sesion/${l.id}`, {
+          replace: true,
+          state: { ...state, variant: nextVariant },
+        });
+      }
+    } catch {
+      // silencioso: el docente puede reintentar con el boton
+    } finally {
+      setRegenerating(false);
+    }
+  };
 
   return (
     <div>
@@ -56,8 +102,14 @@ export default function MaterialView({ type }: { type: "material" | "lesson" }) 
         <Link to="/biblioteca" className="text-sm text-forest-600 underline">
           ← Volver a Biblioteca IA
         </Link>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <RadioAulaButton text={speechText} />
+          {state?.regeneratePayload && (
+            <Button variant="ghost" onClick={regenerate} disabled={regenerating} className="flex items-center gap-1.5">
+              <RefreshCw size={15} className={regenerating ? "animate-spin" : ""} />
+              {regenerating ? "Generando..." : "Generar otra version"}
+            </Button>
+          )}
           <Button onClick={() => window.print()}>Imprimir / Guardar PDF</Button>
         </div>
       </div>
@@ -73,6 +125,27 @@ function ProviderNotice({ provider, aviso }: { provider: string; aviso: string }
     <p className="text-xs italic text-forest-700/70 mb-4 no-print">
       {provider === "demo" ? "Contenido de demostracion — plantilla local." : "Generado por Ollama."}{" "}
       {aviso}
+    </p>
+  );
+}
+
+function InteractiveNote({ pregunta }: { pregunta: string }) {
+  if (!pregunta) return null;
+  return (
+    <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm">
+      <p className="text-[11px] font-bold uppercase tracking-wide text-amber-700 mb-0.5">
+        Pausa interactiva
+      </p>
+      <p className="text-amber-900">{pregunta}</p>
+    </div>
+  );
+}
+
+function AnswerKeyNote({ respuesta }: { respuesta: string | null }) {
+  if (!respuesta) return null;
+  return (
+    <p className="no-print text-xs text-forest-700/70 mb-4">
+      <strong>Clave para el docente (no imprimir con los estudiantes):</strong> {respuesta}
     </p>
   );
 }
@@ -93,8 +166,13 @@ function PrintableMaterial({ material }: { material: Material }) {
       <Section title="Proposito">{c.proposito}</Section>
 
       <Section title={c.area?.toLowerCase().startsWith("com") ? "Texto de lectura" : "Situacion"}>
-        <p className="italic border-l-2 border-forest-800/30 pl-3">{c.texto_o_situacion}</p>
+        <p className="italic border-l-2 border-forest-800/30 pl-3 whitespace-pre-line">
+          {c.texto_o_situacion}
+        </p>
       </Section>
+
+      <InteractiveNote pregunta={c.pregunta_interactiva} />
+      <AnswerKeyNote respuesta={c.respuesta_clave} />
 
       <Section title="Materiales">
         <ul className="list-disc ml-5">
@@ -165,8 +243,13 @@ function PrintableLesson({ lesson }: { lesson: LessonPlan }) {
       <Section title="Proposito">{c.proposito}</Section>
 
       <Section title={c.area?.toLowerCase().startsWith("com") ? "Texto de lectura" : "Situacion"}>
-        <p className="italic border-l-2 border-forest-800/30 pl-3">{c.texto_o_situacion}</p>
+        <p className="italic border-l-2 border-forest-800/30 pl-3 whitespace-pre-line">
+          {c.texto_o_situacion}
+        </p>
       </Section>
+
+      <InteractiveNote pregunta={c.pregunta_interactiva} />
+      <AnswerKeyNote respuesta={c.respuesta_clave} />
 
       <Section title="Materiales">
         <ul className="list-disc ml-5">

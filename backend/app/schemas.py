@@ -91,6 +91,7 @@ class MaterialGenerateRequest(BaseModel):
     available_resources: Optional[str] = None
     local_context: Optional[str] = None
     format: str = "ficha"  # "ficha" | "sesion"
+    variant: int = Field(default=0, ge=0, le=999)
 
 
 class MaterialOut(BaseModel):
@@ -114,6 +115,7 @@ class LessonGenerateRequest(BaseModel):
     duration_minutes: int = 45
     available_resources: Optional[str] = None
     local_context: Optional[str] = None
+    variant: int = Field(default=0, ge=0, le=999)
 
 
 class LessonOut(BaseModel):

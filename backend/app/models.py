@@ -18,6 +18,9 @@ class Competency(SQLModel, table=True):
     area: str  # "Comunicacion" | "Matematica"
     name: str
     description: Optional[str] = None
+    # Referencia curricular concreta (CNEB - Minedu). None si es una
+    # competencia de ejemplo sin respaldo curricular verificado.
+    curricular_source: Optional[str] = None
 
 
 class Assessment(SQLModel, table=True):

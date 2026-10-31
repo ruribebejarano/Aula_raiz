@@ -59,6 +59,7 @@ export const generateMaterial = (payload: {
   available_resources?: string;
   local_context?: string;
   format: "ficha" | "sesion";
+  variant?: number;
 }) => api.post<Material>("/api/materials/generate", payload);
 
 export const listLessons = () => api.get<LessonPlan[]>("/api/lessons");
@@ -70,6 +71,7 @@ export const generateLesson = (payload: {
   duration_minutes: number;
   available_resources?: string;
   local_context?: string;
+  variant?: number;
 }) => api.post<LessonPlan>("/api/lessons/generate", payload);
 
 export const getRadarSummary = () => api.get<RadarSummary>("/api/radar/summary");

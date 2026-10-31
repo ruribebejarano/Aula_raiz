@@ -57,11 +57,15 @@ export default function Biblioteca() {
         local_context: context || undefined,
       };
       if (format === "ficha") {
-        const material = await generateMaterial({ ...payloadBase, format: "ficha" });
-        navigate(`/biblioteca/material/${material.id}`);
+        const material = await generateMaterial({ ...payloadBase, format: "ficha", variant: 0 });
+        navigate(`/biblioteca/material/${material.id}`, {
+          state: { regeneratePayload: payloadBase, kind: "material" },
+        });
       } else {
-        const lesson = await generateLesson(payloadBase);
-        navigate(`/biblioteca/sesion/${lesson.id}`);
+        const lesson = await generateLesson({ ...payloadBase, variant: 0 });
+        navigate(`/biblioteca/sesion/${lesson.id}`, {
+          state: { regeneratePayload: payloadBase, kind: "lesson" },
+        });
       }
     } catch (err: any) {
       setError(err.message ?? "No se pudo generar el material.");
