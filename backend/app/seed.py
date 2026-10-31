@@ -95,10 +95,21 @@ def seed_if_empty(session: Session) -> None:
             "siembra.\n\nCuando termina el dia, se reunen a conversar sobre lo que sembraron, y "
             "deciden anotar en un cuaderno lo que aprendieron para no olvidarlo."
         ),
+        "texto_partes": [
+            "En la chacra de la familia Quispe, todos ayudan segun su edad: los mas pequeños "
+            "recogen las hojas sueltas, mientras los mayores preparan la tierra para la siguiente "
+            "siembra.",
+            "Cuando termina el dia, se reunen a conversar sobre lo que sembraron, y deciden anotar "
+            "en un cuaderno lo que aprendieron para no olvidarlo.",
+        ],
         "pregunta_interactiva": "Antes de seguir leyendo: ¿que creen que anotaron en el cuaderno?",
         "respuesta_clave": None,
         "materiales": ["Ficha impresa", "Lapiz"],
         "instrucciones": ["Lee el texto en voz alta.", "Responde las preguntas segun tu nivel."],
+        "actividades_por_grado": [
+            {"grado": 1, "instruccion": "Escucha el cuento y dibuja a la familia Quispe.", "pregunta": "¿Donde estaban?"},
+            {"grado": 2, "instruccion": "Marca con una palomita las palabras que reconociste.", "pregunta": "¿Que anotaron en el cuaderno?"},
+        ],
         "actividades_por_grupo": [
             {"grupo": "En desarrollo", "actividad": "Responder 2 preguntas literales."},
         ],

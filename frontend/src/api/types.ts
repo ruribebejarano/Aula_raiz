@@ -59,10 +59,12 @@ export interface MaterialContent {
   grado_grupo: string;
   proposito: string;
   texto_o_situacion: string;
+  texto_partes: string[];
   pregunta_interactiva: string;
   respuesta_clave: string | null;
   materiales: string[];
   instrucciones: string[];
+  actividades_por_grado: { grado: number; instruccion: string; pregunta: string }[];
   actividades_por_grupo: { grupo: string; actividad: string }[];
   preguntas: { enunciado: string; pauta_de_revision: string }[];
   adaptacion: { reforzar: string; ampliar: string };
@@ -91,8 +93,10 @@ export interface LessonContent {
   duracion_minutos: number;
   proposito: string;
   texto_o_situacion: string;
+  texto_partes: string[];
   pregunta_interactiva: string;
   respuesta_clave: string | null;
+  actividades_por_grado: { grado: number; instruccion: string; pregunta: string }[];
   materiales: string[];
   momentos: { momento: string; duracion_minutos: number; descripcion: string }[];
   actividades_por_grupo: { grupo: string; actividad: string }[];

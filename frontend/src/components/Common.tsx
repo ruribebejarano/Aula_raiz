@@ -139,6 +139,23 @@ export function DemoTag() {
   );
 }
 
+const GRADE_STYLES = [
+  "bg-forest-100 text-forest-700 border-forest-600",
+  "bg-terracotta-100 text-terracotta-600 border-terracotta-500",
+  "bg-amber-50 text-amber-700 border-amber-400",
+];
+
+export function GradeBadge({ grade, className = "" }: { grade: number; className?: string }) {
+  const style = GRADE_STYLES[grade % GRADE_STYLES.length];
+  return (
+    <span
+      className={`inline-flex items-center justify-center w-9 h-9 rounded-full font-display font-extrabold text-sm border-2 shrink-0 ${style} ${className}`}
+    >
+      {grade}°
+    </span>
+  );
+}
+
 export function CnebBadge({ source }: { source?: string | null }) {
   if (!source) return null;
   return (

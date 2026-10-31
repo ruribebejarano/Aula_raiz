@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { BookOpenText, RefreshCw } from "lucide-react";
 import { generateLesson, generateMaterial, listLessons, listMaterials } from "../api/endpoints";
 import type { LessonPlan, Material } from "../api/types";
-import { Button, ErrorState, LoadingState } from "../components/Common";
+import { Button, ErrorState, GradeBadge, LoadingState, SupportBadge } from "../components/Common";
 import RadioAulaButton from "../components/RadioAulaButton";
 import StoryMode from "../components/StoryMode";
 
@@ -135,7 +135,7 @@ export default function MaterialView({ type }: { type: "material" | "lesson" }) 
         <StoryMode
           titulo={content.titulo}
           area={content.area}
-          texto={content.texto_o_situacion}
+          partes={content.texto_partes?.length ? content.texto_partes : [content.texto_o_situacion]}
           preguntaInteractiva={content.pregunta_interactiva}
           respuestaClave={content.respuesta_clave}
           onClose={() => setStoryModeOpen(false)}
@@ -157,9 +157,9 @@ function ProviderNotice({ provider, aviso }: { provider: string; aviso: string }
 function InteractiveNote({ pregunta }: { pregunta: string }) {
   if (!pregunta) return null;
   return (
-    <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm">
+    <div className="mb-5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 text-sm print:border-black">
       <p className="text-[11px] font-bold uppercase tracking-wide text-amber-700 mb-0.5">
-        Pausa interactiva
+        Pausa interactiva — pregunta antes de seguir
       </p>
       <p className="text-amber-900">{pregunta}</p>
     </div>
@@ -169,9 +169,92 @@ function InteractiveNote({ pregunta }: { pregunta: string }) {
 function AnswerKeyNote({ respuesta }: { respuesta: string | null }) {
   if (!respuesta) return null;
   return (
-    <p className="no-print text-xs text-forest-700/70 mb-4">
+    <p className="no-print text-xs text-forest-700/70 mb-5 bg-forest-50 border border-forest-100 rounded px-3 py-2">
       <strong>Clave para el docente (no imprimir con los estudiantes):</strong> {respuesta}
     </p>
+  );
+}
+
+/** Texto del cuento/situacion como parrafos numerados, en vez de un bloque de texto plano. */
+function StoryText({ parts, area }: { parts: string[]; area: string }) {
+  const isComunicacion = area?.toLowerCase().startsWith("com");
+  if (parts.length <= 1) {
+    return (
+      <p className="italic border-l-2 border-forest-800/30 pl-3 whitespace-pre-line">{parts[0]}</p>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {parts.map((p, i) => (
+        <div key={i} className="flex gap-3">
+          <span className="shrink-0 w-6 h-6 rounded-full bg-forest-100 text-forest-700 text-[11px] font-bold flex items-center justify-center mt-0.5 print:border print:border-black print:bg-white">
+            {i + 1}
+          </span>
+          <p className="italic leading-relaxed">{p}</p>
+        </div>
+      ))}
+      {isComunicacion && (
+        <p className="text-[11px] text-forest-700/50 no-print">
+          Sugerencia: usa Modo interactivo para presentar esto parte por parte, con pausa incluida.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Una tarea distinta por cada grado presente: misma situacion, exigencia diferente. */
+function GradeTasksSection({
+  tasks,
+}: {
+  tasks: { grado: number; instruccion: string; pregunta: string }[];
+}) {
+  if (!tasks || tasks.length === 0) return null;
+  return (
+    <section className="mb-5">
+      <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-forest-800 mb-2">
+        Actividades por grado
+      </h2>
+      <p className="text-xs text-forest-700/60 mb-3 no-print">
+        Todos trabajan la misma historia/situacion; la exigencia cambia segun el grado.
+      </p>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {tasks.map((t) => (
+          <div
+            key={t.grado}
+            className="border border-forest-100 rounded-lg p-3 flex gap-3 print:border-black"
+          >
+            <GradeBadge grade={t.grado} className="print:bg-white print:text-black print:border-black" />
+            <div className="text-sm">
+              <p className="mb-1">{t.instruccion}</p>
+              <p className="text-forest-700/70 italic">{t.pregunta}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function GroupActivitiesSection({
+  activities,
+}: {
+  activities: { grupo: string; actividad: string }[];
+}) {
+  if (!activities || activities.length === 0) return null;
+  return (
+    <section className="mb-5">
+      <h2 className="text-sm font-bold uppercase tracking-wide text-forest-800 mb-2">
+        Actividades por nivel de apoyo
+      </h2>
+      <div className="space-y-2">
+        {activities.map((ga, i) => (
+          <div key={i} className="flex items-start gap-2 text-sm">
+            <SupportBadge level={ga.grupo} />
+            <p className="flex-1">{ga.actividad}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -180,7 +263,7 @@ function PrintableMaterial({ material }: { material: Material }) {
   return (
     <div className="print-page bg-white rounded-xl border border-forest-100 shadow-sm p-6 md:p-10 max-w-3xl mx-auto print:border-0 print:shadow-none print:max-w-full">
       <ProviderNotice provider={material.provider} aviso={c.aviso} />
-      <header className="mb-4 border-b border-forest-800 pb-3">
+      <header className="mb-5 border-b border-forest-800 pb-3">
         <h1 className="text-xl font-bold">{c.titulo}</h1>
         <p className="text-sm">
           Area: {c.area} · Tema: {c.tema} · Grado/grupo: {c.grado_grupo}
@@ -191,13 +274,14 @@ function PrintableMaterial({ material }: { material: Material }) {
       <Section title="Proposito">{c.proposito}</Section>
 
       <Section title={c.area?.toLowerCase().startsWith("com") ? "Texto de lectura" : "Situacion"}>
-        <p className="italic border-l-2 border-forest-800/30 pl-3 whitespace-pre-line">
-          {c.texto_o_situacion}
-        </p>
+        <StoryText parts={c.texto_partes?.length ? c.texto_partes : [c.texto_o_situacion]} area={c.area} />
       </Section>
 
       <InteractiveNote pregunta={c.pregunta_interactiva} />
       <AnswerKeyNote respuesta={c.respuesta_clave} />
+
+      <GradeTasksSection tasks={c.actividades_por_grado} />
+      <GroupActivitiesSection activities={c.actividades_por_grupo} />
 
       <Section title="Materiales">
         <ul className="list-disc ml-5">
@@ -215,15 +299,7 @@ function PrintableMaterial({ material }: { material: Material }) {
         </ol>
       </Section>
 
-      <Section title="Actividades por grupo">
-        {c.actividades_por_grupo.map((ga, i) => (
-          <p key={i} className="mb-1">
-            <strong>{ga.grupo}:</strong> {ga.actividad}
-          </p>
-        ))}
-      </Section>
-
-      <Section title="Preguntas / Ejercicios">
+      <Section title="Preguntas / Ejercicios adicionales">
         <ol className="list-decimal ml-5 space-y-3">
           {c.preguntas.map((p, i) => (
             <li key={i}>
@@ -257,7 +333,7 @@ function PrintableLesson({ lesson }: { lesson: LessonPlan }) {
   return (
     <div className="print-page bg-white rounded-xl border border-forest-100 shadow-sm p-6 md:p-10 max-w-3xl mx-auto print:border-0 print:shadow-none print:max-w-full">
       <ProviderNotice provider="demo" aviso={c.aviso} />
-      <header className="mb-4 border-b border-forest-800 pb-3">
+      <header className="mb-5 border-b border-forest-800 pb-3">
         <h1 className="text-xl font-bold">{c.titulo}</h1>
         <p className="text-sm">
           Area: {c.area} · Tema: {c.tema} · Grado/grupo: {c.grado_grupo} · Duracion:{" "}
@@ -268,13 +344,13 @@ function PrintableLesson({ lesson }: { lesson: LessonPlan }) {
       <Section title="Proposito">{c.proposito}</Section>
 
       <Section title={c.area?.toLowerCase().startsWith("com") ? "Texto de lectura" : "Situacion"}>
-        <p className="italic border-l-2 border-forest-800/30 pl-3 whitespace-pre-line">
-          {c.texto_o_situacion}
-        </p>
+        <StoryText parts={c.texto_partes?.length ? c.texto_partes : [c.texto_o_situacion]} area={c.area} />
       </Section>
 
       <InteractiveNote pregunta={c.pregunta_interactiva} />
       <AnswerKeyNote respuesta={c.respuesta_clave} />
+
+      <GradeTasksSection tasks={c.actividades_por_grado} />
 
       <Section title="Materiales">
         <ul className="list-disc ml-5">
@@ -295,13 +371,7 @@ function PrintableLesson({ lesson }: { lesson: LessonPlan }) {
         ))}
       </Section>
 
-      <Section title="Actividades por grupo">
-        {c.actividades_por_grupo.map((ga, i) => (
-          <p key={i} className="mb-1">
-            <strong>{ga.grupo}:</strong> {ga.actividad}
-          </p>
-        ))}
-      </Section>
+      <GroupActivitiesSection activities={c.actividades_por_grupo} />
 
       <Section title="Sugerencia de evaluacion">{c.sugerencia_evaluacion}</Section>
 
@@ -314,8 +384,8 @@ function PrintableLesson({ lesson }: { lesson: LessonPlan }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mb-4">
-      <h2 className="text-sm font-bold uppercase tracking-wide text-forest-800 mb-1">{title}</h2>
+    <section className="mb-5">
+      <h2 className="text-sm font-bold uppercase tracking-wide text-forest-800 mb-1.5">{title}</h2>
       <div className="text-sm">{children}</div>
     </section>
   );

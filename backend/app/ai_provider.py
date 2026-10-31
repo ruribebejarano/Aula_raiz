@@ -20,7 +20,7 @@ from typing import Any
 import httpx
 
 from app.config import settings
-from app.storyteller import generate_math_situation, generate_story
+from app.storyteller import generate_grade_tasks, generate_math_situation, generate_story
 
 GRADE_RANGE_LABELS = {
     1: "1er grado",
@@ -132,15 +132,21 @@ class DemoAIProvider(AIProvider):
         is_comunicacion = area.lower().startswith("com")
 
         respuesta_clave = None
+        story = None
+        math_situacion = None
         if is_comunicacion:
             story = generate_story(topic, local_context, variant)
             texto_o_situacion = story["texto"]
+            texto_partes = story["partes"]
             pregunta_interactiva = story["pregunta_interactiva"]
         else:
-            situacion = generate_math_situation(topic, local_context, grades, variant)
-            texto_o_situacion = situacion["texto"]
-            pregunta_interactiva = situacion["pregunta_interactiva"]
-            respuesta_clave = situacion["respuesta_clave"]
+            math_situacion = generate_math_situation(topic, local_context, grades, variant)
+            texto_o_situacion = math_situacion["texto"]
+            texto_partes = math_situacion["partes"]
+            pregunta_interactiva = math_situacion["pregunta_interactiva"]
+            respuesta_clave = math_situacion["respuesta_clave"]
+
+        grade_tasks = generate_grade_tasks(area, topic, grades, story=story, math=math_situacion)
 
         group_activities = []
         all_questions: list[dict[str, str]] = []
@@ -166,6 +172,7 @@ class DemoAIProvider(AIProvider):
                 f"{area}, trabajando con actividades adecuadas a su nivel de apoyo actual."
             ),
             "texto_o_situacion": texto_o_situacion,
+            "texto_partes": texto_partes,
             "pregunta_interactiva": pregunta_interactiva,
             "respuesta_clave": respuesta_clave,
             "materiales": self._materials_for(area, available_resources),
@@ -176,9 +183,10 @@ class DemoAIProvider(AIProvider):
                     if is_comunicacion
                     else "Presenta la situacion descrita arriba y haz la pregunta interactiva antes de resolverla juntos."
                 ),
-                "Entrega la ficha correspondiente a cada grupo.",
+                "Entrega a cada grado su tarea especifica (ver 'Actividades por grado').",
                 "Circula entre los grupos para observar el procedimiento, no solo el resultado.",
             ],
+            "actividades_por_grado": grade_tasks,
             "actividades_por_grupo": group_activities,
             "preguntas": all_questions[:5] if len(all_questions) > 5 else all_questions,
             "adaptacion": {
@@ -202,15 +210,21 @@ class DemoAIProvider(AIProvider):
         is_comunicacion = area.lower().startswith("com")
 
         respuesta_clave = None
+        story = None
+        math_situacion = None
         if is_comunicacion:
             story = generate_story(topic, local_context, variant)
             texto_o_situacion = story["texto"]
+            texto_partes = story["partes"]
             pregunta_interactiva = story["pregunta_interactiva"]
         else:
-            situacion = generate_math_situation(topic, local_context, grades, variant)
-            texto_o_situacion = situacion["texto"]
-            pregunta_interactiva = situacion["pregunta_interactiva"]
-            respuesta_clave = situacion["respuesta_clave"]
+            math_situacion = generate_math_situation(topic, local_context, grades, variant)
+            texto_o_situacion = math_situacion["texto"]
+            texto_partes = math_situacion["partes"]
+            pregunta_interactiva = math_situacion["pregunta_interactiva"]
+            respuesta_clave = math_situacion["respuesta_clave"]
+
+        grade_tasks = generate_grade_tasks(area, topic, grades, story=story, math=math_situacion)
 
         per_group_minutes = max(8, duration // max(1, len(levels) + 1))
         content = {
@@ -224,8 +238,10 @@ class DemoAIProvider(AIProvider):
                 f"distintos grados y niveles de apoyo presentes en el aula multigrado."
             ),
             "texto_o_situacion": texto_o_situacion,
+            "texto_partes": texto_partes,
             "pregunta_interactiva": pregunta_interactiva,
             "respuesta_clave": respuesta_clave,
+            "actividades_por_grado": grade_tasks,
             "materiales": self._materials_for(area, req.get("available_resources")),
             "momentos": [
                 {
@@ -330,33 +346,38 @@ class OllamaAIProvider(AIProvider):
         area = req["area"]
         is_comunicacion = area.lower().startswith("com")
         text_label = (
-            "un cuento breve pero completo (3 parrafos cortos: presentacion, desarrollo y cierre, en "
-            "español sencillo) protagonizado por un niño o niña, contextualizado a una comunidad rural "
-            "y relacionado con el tema"
+            "un cuento largo pero sencillo, de 5 partes (presentacion, contexto, complicacion, accion y "
+            "cierre, cada una de 2-3 oraciones), protagonizado por un niño o niña, contextualizado a una "
+            "comunidad rural y relacionado con el tema"
             if is_comunicacion
             else "un problema matematico contextualizado en una comunidad rural que incluya cantidades "
             "numericas concretas y pueda resolverse con los datos dados (no solo ambientacion)"
         )
+        grades = req.get("grades") or []
         prompt = (
             f"Genera una ficha diferenciada en español para primaria rural multigrado. "
-            f"Area: {area}. Tema: {req['topic']}. Grados: {req.get('grades')}. "
+            f"Area: {area}. Tema: {req['topic']}. Grados presentes en la misma aula: {grades}. "
             f"Niveles de apoyo presentes: {req.get('support_levels')}. "
             f"Contexto local indicado por el docente: {req.get('local_context') or 'ninguno'}. "
-            f"Incluye en 'texto_o_situacion' {text_label}. Las preguntas deben referirse a ese texto o "
-            "situacion especifica, nunca ser genericas. Incluye tambien 'pregunta_interactiva': una sola "
-            "pregunta breve para que el docente pause la lectura o el calculo y genere discusion en el "
-            "aula antes de revelar el final o el resultado (tecnica de lectura interactiva / antes-durante-"
-            "despues usada en aulas multigrado). "
+            f"Incluye en 'texto_o_situacion' {text_label}, y en 'texto_partes' una lista con cada parte "
+            "como un string separado (la union de texto_partes debe ser igual a texto_o_situacion). "
+            "Las preguntas deben referirse a ese texto o situacion especifica, nunca ser genericas. "
+            "Incluye tambien 'pregunta_interactiva': una sola pregunta breve para que el docente pause la "
+            "lectura o el calculo y genere discusion en el aula antes de revelar el final o el resultado "
+            "(tecnica de lectura interactiva / antes-durante-despues usada en aulas multigrado). "
+            f"Ademas, en 'actividades_por_grado' incluye UNA tarea distinta por cada grado de {grades} "
+            "sobre el MISMO texto/situacion, con exigencia creciente segun el grado (objetos con claves "
+            "grado, instruccion, pregunta). "
             + (
                 "Incluye 'respuesta_clave' con el resultado numerico correcto del problema, como texto."
                 if not is_comunicacion
                 else "Deja 'respuesta_clave' como null."
             )
             + " Responde en JSON con claves: titulo, area, tema, grado_grupo, proposito, texto_o_situacion, "
-            "pregunta_interactiva, respuesta_clave, materiales (lista), instrucciones (lista), "
-            "actividades_por_grupo (lista de objetos grupo/actividad), preguntas (lista de objetos "
-            "enunciado/pauta_de_revision), adaptacion (objeto reforzar/ampliar), indicacion_impresion, "
-            "contexto_local."
+            "texto_partes, pregunta_interactiva, respuesta_clave, actividades_por_grado, materiales "
+            "(lista), instrucciones (lista), actividades_por_grupo (lista de objetos grupo/actividad), "
+            "preguntas (lista de objetos enunciado/pauta_de_revision), adaptacion (objeto "
+            "reforzar/ampliar), indicacion_impresion, contexto_local."
         )
         result = self._call_ollama(prompt)
         if result is None:
@@ -364,6 +385,8 @@ class OllamaAIProvider(AIProvider):
             fallback.note = "Ollama no respondio con JSON valido; se uso la plantilla de demostracion."
             return fallback
         result.setdefault("aviso", "Contenido generado por modelo local (Ollama). El docente debe revisarlo antes de aplicarlo.")
+        result.setdefault("texto_partes", [result.get("texto_o_situacion", "")])
+        result.setdefault("actividades_por_grado", [])
         return AIGenerationResult(content=result, provider_used="ollama")
 
     def generate_lesson(self, req: dict[str, Any]) -> AIGenerationResult:
@@ -400,6 +423,8 @@ class OllamaAIProvider(AIProvider):
             fallback.note = "Ollama no respondio con JSON valido; se uso la plantilla de demostracion."
             return fallback
         result.setdefault("aviso", "Contenido generado por modelo local (Ollama). El docente debe revisarlo antes de aplicarlo.")
+        result.setdefault("texto_partes", [result.get("texto_o_situacion", "")])
+        result.setdefault("actividades_por_grado", [])
         return AIGenerationResult(content=result, provider_used="ollama")
 
 
