@@ -6,7 +6,7 @@ import {
   listStudents,
 } from "../api/endpoints";
 import type { Assessment, Competency, Student } from "../api/types";
-import { Button, Card, LoadingState, PageTitle, SupportBadge } from "../components/Common";
+import { Button, Card, CnebBadge, LoadingState, PageTitle, SupportBadge } from "../components/Common";
 
 const QUIZ_ITEMS = [
   "Pregunta de ejemplo 1: resolvio correctamente el primer ejercicio.",
@@ -121,12 +121,13 @@ export default function Diagnostico() {
                   </option>
                 ))}
               </select>
-              {competencyId !== "" &&
-                competencies.find((c) => c.id === competencyId)?.curricular_source && (
-                  <p className="text-[11px] text-forest-700/60 mt-1">
-                    Competencia del {competencies.find((c) => c.id === competencyId)?.curricular_source}
-                  </p>
-                )}
+              {competencyId !== "" && (
+                <div className="mt-1.5">
+                  <CnebBadge
+                    source={competencies.find((c) => c.id === competencyId)?.curricular_source}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -227,9 +228,22 @@ export default function Diagnostico() {
         </Card>
       )}
 
-      <Card>
+      <Card className="mb-6">
         <h3 className="font-semibold text-forest-800 mb-2">Regla de clasificacion (transparente)</h3>
         <p className="text-sm text-forest-700/80">{rule}</p>
+      </Card>
+
+      <Card className="bg-forest-50/50 border-forest-100">
+        <div className="flex items-center gap-2 mb-2">
+          <CnebBadge source="Curriculo Nacional de la Educacion Basica (CNEB), Minedu 2016" />
+          <h3 className="font-semibold text-forest-800">De donde salen estas competencias</h3>
+        </div>
+        <p className="text-sm text-forest-700/80">
+          Los nombres de las competencias (por ejemplo, "Resuelve problemas de cantidad" o "Lee
+          diversos tipos de textos escritos en su lengua materna") estan tomados tal cual del
+          Curriculo Nacional de la Educacion Basica del Minedu, no son etiquetas inventadas para
+          la demo. Los umbrales de puntaje si son ilustrativos del prototipo.
+        </p>
       </Card>
     </div>
   );

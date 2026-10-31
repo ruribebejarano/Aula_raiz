@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { RefreshCw } from "lucide-react";
+import { BookOpenText, RefreshCw } from "lucide-react";
 import { generateLesson, generateMaterial, listLessons, listMaterials } from "../api/endpoints";
 import type { LessonPlan, Material } from "../api/types";
 import { Button, ErrorState, LoadingState } from "../components/Common";
 import RadioAulaButton from "../components/RadioAulaButton";
+import StoryMode from "../components/StoryMode";
 
 interface RegenerateState {
   regeneratePayload?: Record<string, unknown>;
@@ -20,6 +21,7 @@ export default function MaterialView({ type }: { type: "material" | "lesson" }) 
   const [lesson, setLesson] = useState<LessonPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [regenerating, setRegenerating] = useState(false);
+  const [storyModeOpen, setStoryModeOpen] = useState(false);
 
   const state = (location.state as RegenerateState | null) ?? null;
 
@@ -96,6 +98,8 @@ export default function MaterialView({ type }: { type: "material" | "lesson" }) 
     }
   };
 
+  const content = type === "material" ? material?.content : lesson?.content;
+
   return (
     <div>
       <div className="no-print flex items-center justify-between flex-wrap gap-3 mb-4">
@@ -103,6 +107,16 @@ export default function MaterialView({ type }: { type: "material" | "lesson" }) 
           ← Volver a Biblioteca IA
         </Link>
         <div className="flex gap-2 flex-wrap">
+          {content && (
+            <Button
+              variant="secondary"
+              onClick={() => setStoryModeOpen(true)}
+              className="flex items-center gap-1.5"
+            >
+              <BookOpenText size={15} />
+              Modo interactivo
+            </Button>
+          )}
           <RadioAulaButton text={speechText} />
           {state?.regeneratePayload && (
             <Button variant="ghost" onClick={regenerate} disabled={regenerating} className="flex items-center gap-1.5">
@@ -116,6 +130,17 @@ export default function MaterialView({ type }: { type: "material" | "lesson" }) 
 
       {type === "material" && material && <PrintableMaterial material={material} />}
       {type === "lesson" && lesson && <PrintableLesson lesson={lesson} />}
+
+      {storyModeOpen && content && (
+        <StoryMode
+          titulo={content.titulo}
+          area={content.area}
+          texto={content.texto_o_situacion}
+          preguntaInteractiva={content.pregunta_interactiva}
+          respuestaClave={content.respuesta_clave}
+          onClose={() => setStoryModeOpen(false)}
+        />
+      )}
     </div>
   );
 }

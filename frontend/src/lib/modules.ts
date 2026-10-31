@@ -43,7 +43,7 @@ export const MODULES: ModuleInfo[] = [
     name: "NIVELA AI",
     tagline: "Diagnostico y agrupacion",
     description:
-      "Organiza en minutos que competencias domina cada estudiante y a quien conviene reforzar primero.",
+      "Usa las competencias reales del Curriculo Nacional (CNEB - Minedu) para organizar en minutos quien necesita reforzar que, y por que.",
     icon: ClipboardCheck,
     to: "/diagnostico",
     accent: {
@@ -54,26 +54,11 @@ export const MODULES: ModuleInfo[] = [
     },
   },
   {
-    key: "biblioteca-ia",
-    name: "BIBLIOTECA IA",
-    tagline: "Sesiones y fichas listas",
-    description:
-      "Genera fichas y sesiones diferenciadas por nivel, contextualizadas y listas para fotocopiar.",
-    icon: BookOpenText,
-    to: "/biblioteca",
-    accent: {
-      bg: "bg-terracotta-100",
-      text: "text-terracotta-600",
-      ring: "hover:border-terracotta-500",
-      solid: "bg-terracotta-500",
-    },
-  },
-  {
     key: "radar-educativo",
     name: "RADAR EDUCATIVO",
     tagline: "Seguimiento del progreso",
     description:
-      "Muestra la evolucion de la clase y que competencias conviene reforzar, con alertas orientativas.",
+      "Un radar real por competencia, no solo barras: muestra de un vistazo donde esta fuerte y donde floja el aula.",
     icon: RadarIcon,
     to: "/radar",
     accent: {
@@ -81,6 +66,21 @@ export const MODULES: ModuleInfo[] = [
       text: "text-amber-700",
       ring: "hover:border-amber-400",
       solid: "bg-amber-500",
+    },
+  },
+  {
+    key: "biblioteca-ia",
+    name: "BIBLIOTECA IA",
+    tagline: "Cuentos y problemas interactivos",
+    description:
+      "Genera cuentos y problemas reales (con numeros y respuesta, no solo ambientacion) y presentalos en Modo interactivo, a pantalla completa, con una pausa para que el aula prediga antes del final.",
+    icon: BookOpenText,
+    to: "/biblioteca",
+    accent: {
+      bg: "bg-terracotta-100",
+      text: "text-terracotta-600",
+      ring: "hover:border-terracotta-500",
+      solid: "bg-terracotta-500",
     },
   },
   {

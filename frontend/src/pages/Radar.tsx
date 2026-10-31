@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
   Cell,
   Legend,
   Pie,
   PieChart,
+  PolarAngleAxis,
+  PolarGrid,
+  PolarRadiusAxis,
+  Radar as RadarShape,
+  RadarChart,
   ResponsiveContainer,
   Tooltip,
-  XAxis,
-  YAxis,
 } from "recharts";
 import { getRadarSummary } from "../api/endpoints";
 import type { RadarSummary } from "../api/types";
@@ -52,23 +52,49 @@ export default function Radar() {
 
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         <Card>
-          <h3 className="font-semibold text-forest-800 mb-3">Promedio por competencia (%)</h3>
-          {data.by_competency.length === 0 ? (
-            <EmptyState title="Aun no hay resultados suficientes" />
+          <h3 className="font-semibold text-forest-800 mb-1">El radar del aula</h3>
+          <p className="text-xs text-forest-700/60 mb-3">
+            Cada punta es una competencia. La forma verde es el promedio real de la clase; la linea
+            punteada marca el desempeno esperado (70%).
+          </p>
+          {data.by_competency.length < 3 ? (
+            <EmptyState
+              title="Se necesitan al menos 3 competencias con resultados"
+              description="Registra mas diagnosticos en NIVELA AI para ver el radar completo."
+            />
           ) : (
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={data.by_competency} layout="vertical" margin={{ left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" domain={[0, 100]} />
-                <YAxis
-                  type="category"
-                  dataKey="competency_name"
-                  width={140}
-                  tick={{ fontSize: 11 }}
+            <ResponsiveContainer width="100%" height={320}>
+              <RadarChart
+                data={data.by_competency.map((c) => ({
+                  competencia: c.competency_name,
+                  promedio: c.average_pct,
+                  meta: 70,
+                }))}
+              >
+                <PolarGrid stroke="#dcebe0" />
+                <PolarAngleAxis
+                  dataKey="competencia"
+                  tick={{ fontSize: 10, fill: "#234730" }}
                 />
+                <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 9 }} />
+                <RadarShape
+                  name="Meta (70%)"
+                  dataKey="meta"
+                  stroke="#c9693a"
+                  strokeDasharray="4 3"
+                  fill="transparent"
+                  fillOpacity={0}
+                />
+                <RadarShape
+                  name="Promedio del aula"
+                  dataKey="promedio"
+                  stroke="#2f5d3f"
+                  fill="#2f5d3f"
+                  fillOpacity={0.45}
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="average_pct" fill="#2f5d3f" radius={4} />
-              </BarChart>
+              </RadarChart>
             </ResponsiveContainer>
           )}
         </Card>

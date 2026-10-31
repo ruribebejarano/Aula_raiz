@@ -138,3 +138,15 @@ export function DemoTag() {
     </span>
   );
 }
+
+export function CnebBadge({ source }: { source?: string | null }) {
+  if (!source) return null;
+  return (
+    <span
+      title={source}
+      className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-forest-800 text-ivory-50"
+    >
+      CNEB · Minedu
+    </span>
+  );
+}
